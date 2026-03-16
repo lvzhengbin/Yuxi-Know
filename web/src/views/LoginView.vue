@@ -399,8 +399,9 @@ const handleLogin = async () => {
 
     // 根据用户角色决定重定向目标
     if (redirectPath === '/') {
-      // 如果是管理员，直接跳转到/chat页面
+      // 如果是管理员，初始化后跳转到/agent页面
       if (userStore.isAdmin) {
+        await agentStore.initialize()
         router.push('/agent')
         return
       }

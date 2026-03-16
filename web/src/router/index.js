@@ -169,9 +169,9 @@ router.beforeEach(async (to, from, next) => {
         next(`/agent/${defaultAgent.id}`)
       } else {
         // 如果没有默认智能体，可以考虑跳转到第一个可用的智能体，或者一个特定的页面
-        const agentIds = Object.keys(agentStore.agents)
-        if (agentIds.length > 0) {
-          next(`/agent/${agentIds[0]}`)
+        const firstAgent = agentStore.agents[0]
+        if (firstAgent) {
+          next(`/agent/${firstAgent.id}`)
         } else {
           // 没有可用的智能体，跳转到首页
           next('/')

@@ -42,6 +42,7 @@ cache
 .cursor
 .trae
 .pytest_cache
+.agent
 
 *.secret*
 *.nogit*
@@ -66,3 +67,4 @@ docs/vibe
 .cursorrules
 
 /models
+openspec/
