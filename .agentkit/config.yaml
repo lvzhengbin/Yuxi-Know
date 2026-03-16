@@ -1,0 +1,25 @@
+# Agent Knowledge Kit 配置文件
+
+project:
+  name: yuxi-know
+  type: backend-python
+
+knowledge_base:
+  mode: centralized
+  location: yuxi-knowledge-context/
+
+global_scan_completed: true
+services:
+  - name: service-backend
+    type: python
+    language: Python
+    framework: FastAPI + LangGraph + LightRAG
+    path: src/ + server/
+    responsibility: RAG 知识库后端 + 智能体 API 服务
+
+  - name: web
+    type: node
+    language: JavaScript
+    framework: Vue.js + Vite + Ant Design Vue
+    path: web/
+    responsibility: 前端管理界面

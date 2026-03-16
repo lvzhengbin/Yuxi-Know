@@ -68,3 +68,4 @@ docs/vibe
 
 /models
 openspec/
+.venv-agentkit
