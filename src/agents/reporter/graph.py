@@ -71,6 +71,9 @@ class SqlReporterAgent(BaseAgent):
 
     async def get_graph(self, **kwargs):
         """构建图"""
+        if self.graph is not None:
+            return self.graph
+
         context = self.context_schema.from_file(module_name=self.module_name)
         all_mcp_tools = await get_tools_from_all_servers()
 
@@ -87,4 +90,5 @@ class SqlReporterAgent(BaseAgent):
         )
 
         logger.info("SqlReporterAgent 构建成功")
+        self.graph = graph
         return graph

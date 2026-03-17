@@ -245,6 +245,10 @@ async def get_mcp_tools(
             # Extract connection config
             server_config = mcp_servers[server_name]
             client_config = {k: v for k, v in server_config.items() if k not in ("disabled_tools",)}
+            # Apply default connection timeout for HTTP-based transports to prevent indefinite hangs
+            transport = client_config.get("transport", "")
+            if transport in ("sse", "streamable_http", "streamable-http", "http") and client_config.get("timeout") is None:
+                client_config["timeout"] = 10
 
             client = await get_mcp_client({server_name: client_config})
             if client is None:
@@ -311,8 +315,13 @@ async def get_tools_from_all_servers() -> list[Callable[..., Any]]:
     """Get all tools from all configured MCP servers."""
     all_tools = []
     for server_name in MCP_SERVERS.keys():
-        tools = await get_mcp_tools(server_name)
-        all_tools.extend(tools)
+        try:
+            tools = await asyncio.wait_for(get_mcp_tools(server_name), timeout=10.0)
+            all_tools.extend(tools)
+        except asyncio.TimeoutError:
+            logger.warning(f"MCP server '{server_name}' timed out when fetching tools, skipping")
+        except Exception as e:
+            logger.warning(f"Failed to get tools from MCP server '{server_name}': {e}")
     return all_tools
 
 

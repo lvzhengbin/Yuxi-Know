@@ -32,6 +32,9 @@ class ChatbotAgent(BaseAgent):
 
     async def get_graph(self, **kwargs):
         """构建图"""
+        if self.graph is not None:
+            return self.graph
+
         context = self.context_schema()
         all_mcp_tools = (
             await get_tools_from_all_servers()
@@ -55,6 +58,7 @@ class ChatbotAgent(BaseAgent):
             checkpointer=await self._get_checkpointer(),
         )
 
+        self.graph = graph
         return graph
 
 
