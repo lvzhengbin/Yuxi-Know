@@ -722,6 +722,7 @@ const switchToUser = async (user) => {
   flex: 1;
   white-space: pre-wrap;
   word-break: break-all;
+  color: var(--gray-200);
 }
 
 .level-info {
@@ -734,17 +735,26 @@ const switchToUser = async (user) => {
   .level {
     color: var(--color-error-500);
   }
+  .message {
+    color: #ffb3b3;
+  }
 }
 
 .level-debug {
   .level {
     color: var(--color-info-500);
   }
+  .message {
+    color: var(--gray-400);
+  }
 }
 
 .level-warning {
   .level {
     color: var(--color-warning-500);
+  }
+  .message {
+    color: #ffd591;
   }
 }
 

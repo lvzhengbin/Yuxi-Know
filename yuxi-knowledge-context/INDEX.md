@@ -1,6 +1,6 @@
 # Yuxi-Know 知识库索引
 
-> 版本：v0.5.1 | 项目类型：backend-python | 最后更新：2026-03-16
+> 版本：v0.5.2 | 项目类型：backend-python | 最后更新：2026-03-17
 
 ## 项目简介
 
@@ -62,6 +62,7 @@ yuxi-knowledge-context/
 | 文件 | 关键词 | 说明 |
 |------|--------|------|
 | [tech/backend-python/experience/pitfalls/venv-detection-sys-prefix-vs-executable.md](tech/backend-python/experience/pitfalls/venv-detection-sys-prefix-vs-executable.md) | venv、sys.prefix、os.execv、无限循环、macOS Python 3.13 | Python venv 检测应用 sys.prefix 而非 sys.executable，否则在 macOS+Python 3.13 上会导致无限循环 |
+| [tech/backend-python/experience/pitfalls/mcp-http-server-timeout-api-hang.md](tech/backend-python/experience/pitfalls/mcp-http-server-timeout-api-hang.md) | MCP、streamable_http、连接超时、API挂起、智能体加载、get_graph缓存 | HTTP 类型 MCP 服务器无超时配置 + 图构建无缓存，导致 GET /api/chat/agent 无限挂起；需设置 httpx timeout=10 并为 get_graph() 添加 self.graph 缓存 |
 
 ## 服务列表
 

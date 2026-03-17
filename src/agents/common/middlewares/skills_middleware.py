@@ -171,21 +171,23 @@ class SkillsMiddleware(AgentMiddleware):
         self.skills_context_name = skills_context_name
         self.enable_skills_prompt = enable_skills_prompt
         self.skills_sources_for_prompt = skills_sources_for_prompt or ["/skills/"]
-        # 实例级缓存：避免每次模型调用都查数据库
-        self._dependency_map_cache: dict[str, SkillDependencyNode] | None = None
-        self._prompt_metadata_cache: dict[str, SkillPromptMetadata] | None = None
+        # 实例级缓存（已禁用：skill 变更后缓存不会自动失效，导致新增 skill 无法生效）
+        # self._dependency_map_cache: dict[str, SkillDependencyNode] | None = None
+        # self._prompt_metadata_cache: dict[str, SkillPromptMetadata] | None = None
 
     async def _get_dependency_map_cached(self) -> dict[str, SkillDependencyNode]:
-        """获取依赖映射（带缓存）"""
-        if self._dependency_map_cache is None:
-            self._dependency_map_cache = await get_dependency_map()
-        return self._dependency_map_cache
+        """获取依赖映射（直接查 DB，无缓存）"""
+        # if self._dependency_map_cache is None:
+        #     self._dependency_map_cache = await get_dependency_map()
+        # return self._dependency_map_cache
+        return await get_dependency_map()
 
     async def _get_prompt_metadata_cached(self) -> dict[str, SkillPromptMetadata]:
-        """获取提示词元数据（带缓存）"""
-        if self._prompt_metadata_cache is None:
-            self._prompt_metadata_cache = await get_prompt_metadata()
-        return self._prompt_metadata_cache
+        """获取提示词元数据（直接查 DB，无缓存）"""
+        # if self._prompt_metadata_cache is None:
+        #     self._prompt_metadata_cache = await get_prompt_metadata()
+        # return self._prompt_metadata_cache
+        return await get_prompt_metadata()
 
     async def abefore_agent(self, state: SkillsState, runtime) -> dict[str, Any] | None:
         """在 agent 执行前注入 skills 提示词"""

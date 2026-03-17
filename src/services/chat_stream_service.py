@@ -430,8 +430,18 @@ async def stream_agent_chat(
 
         full_msg = None
         accumulated_content = []
+        _llm_call_idx = 0
+        _llm_ttft_start = asyncio.get_event_loop().time()
+        _llm_ttft_logged = False
         async for msg, metadata in agent.stream_messages(messages, input_context=input_context):
             if isinstance(msg, AIMessageChunk):
+                if not _llm_ttft_logged and msg.content:
+                    _ttft = asyncio.get_event_loop().time() - _llm_ttft_start
+                    logger.debug(
+                        f"[LLM TTFT] agent={agent_id} thread={thread_id} "
+                        f"call=#{_llm_call_idx + 1} ttft={_ttft:.3f}s"
+                    )
+                    _llm_ttft_logged = True
                 accumulated_content.append(msg.content)
 
                 content_for_check = "".join(accumulated_content[-10:])
@@ -449,6 +459,9 @@ async def stream_agent_chat(
 
                 try:
                     if msg_dict.get("type") == "tool":
+                        _llm_call_idx += 1
+                        _llm_ttft_start = asyncio.get_event_loop().time()
+                        _llm_ttft_logged = False
                         graph = await agent.get_graph()
                         state = await graph.aget_state(langgraph_config)
                         agent_state = extract_agent_state(getattr(state, "values", {})) if state else {}
@@ -605,10 +618,25 @@ async def stream_agent_resume(
     )
 
     try:
+        _llm_call_idx = 0
+        _llm_ttft_start = asyncio.get_event_loop().time()
+        _llm_ttft_logged = False
         async for msg, metadata in stream_source:
+            if isinstance(msg, AIMessageChunk) and not _llm_ttft_logged and msg.content:
+                _ttft = asyncio.get_event_loop().time() - _llm_ttft_start
+                logger.debug(
+                    f"[LLM TTFT] agent={agent_id} thread={thread_id} "
+                    f"call=#{_llm_call_idx + 1} ttft={_ttft:.3f}s"
+                )
+                _llm_ttft_logged = True
             msg_dict = msg.model_dump()
             if "id" not in msg_dict:
                 msg_dict["id"] = str(uuid.uuid4())
+
+            if msg_dict.get("type") == "tool":
+                _llm_call_idx += 1
+                _llm_ttft_start = asyncio.get_event_loop().time()
+                _llm_ttft_logged = False
 
             yield make_resume_chunk(
                 content=getattr(msg, "content", ""), msg=msg_dict, metadata=metadata, status="loading"
