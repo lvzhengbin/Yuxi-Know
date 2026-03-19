@@ -112,6 +112,7 @@ Content-Type: application/json
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | `content_hashes` | object | **是**（MinIO 文件时） | MinIO URL → content_hash 的映射，值来自 Step 1 响应的 `content_hash` 字段 |
+| `parent_id` | string | 否 | 目标文件夹的 `file_id`，不传则上传到知识库根目录。见 [3.5 上传到指定目录](#35-上传到指定目录文件夹) |
 | `auto_index` | bool | 否 | `true` 表示解析完成后自动入库，默认 `false` |
 | `chunk_preset_id` | string | 否 | 切片预设 ID，控制分块策略 |
 | `chunk_parser_config` | object | 否 | 自定义分块解析配置 |
@@ -144,7 +145,81 @@ Content-Type: application/json
 
 ---
 
-### 3.4 方式三：手动分步控制（高级）
+### 3.4 上传到指定目录（文件夹）
+
+默认情况下，文档会上传到知识库根目录。通过在 Step 2 的 `params` 中传入 `parent_id`（目标文件夹的 `file_id`），可以将文档放入指定子目录。
+
+#### 获取现有文件夹 ID
+
+```http
+GET /api/knowledge/databases/{db_id}
+Authorization: Bearer <token>
+```
+
+响应中的 `files` 字段包含该知识库所有文件和文件夹，过滤 `is_folder: true` 的条目即可获取文件夹列表：
+
+```json
+{
+  "files": {
+    "folder_abc123": {
+      "file_id": "folder_abc123",
+      "filename": "产品文档",
+      "is_folder": true,
+      "parent_id": null
+    },
+    "folder_def456": {
+      "file_id": "folder_def456",
+      "filename": "技术规范",
+      "is_folder": true,
+      "parent_id": "folder_abc123"
+    }
+  }
+}
+```
+
+#### 创建新文件夹（可选）
+
+如果目标目录不存在，可先创建：
+
+```http
+POST /api/knowledge/databases/{db_id}/folders
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "folder_name": "新目录名称",
+  "parent_id": null
+}
+```
+
+> `parent_id` 为 `null` 表示在根目录下创建；传入某个文件夹的 `file_id` 则在该文件夹下创建子目录。
+
+响应中包含新建文件夹的 `file_id`，用于后续上传。
+
+#### 上传到指定目录
+
+在 Step 2 的 `params` 中加入 `parent_id`：
+
+```http
+POST /api/knowledge/databases/{db_id}/documents
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "items": ["http://minio:9000/ref-{db_id}/document_1710000000000.pdf"],
+  "params": {
+    "content_hashes": {
+      "http://minio:9000/ref-{db_id}/document_1710000000000.pdf": "sha256:abc123..."
+    },
+    "parent_id": "folder_abc123",
+    "auto_index": true
+  }
+}
+```
+
+---
+
+### 3.5 方式三：手动分步控制（高级）
 
 适合需要精确控制每个阶段的场景：
 
@@ -261,7 +336,7 @@ def get_token(username: str, password: str) -> str:
     resp.raise_for_status()
     return resp.json()["access_token"]
 
-def upload_and_index(token: str, file_path: str, db_id: str) -> dict:
+def upload_and_index(token: str, file_path: str, db_id: str, parent_id: str | None = None) -> dict:
     headers = {"Authorization": f"Bearer {token}"}
 
     # Step 1: 上传文件
@@ -279,19 +354,45 @@ def upload_and_index(token: str, file_path: str, db_id: str) -> dict:
 
     # Step 2: 添加到知识库并自动入库
     # content_hashes 为必填：key 为 MinIO URL，value 为 content_hash
+    # parent_id 可选：指定目标文件夹，不传则上传到根目录
+    params = {
+        "content_hashes": {minio_path: content_hash},
+        "auto_index": True,
+    }
+    if parent_id:
+        params["parent_id"] = parent_id
+
     resp = httpx.post(
         f"{BASE_URL}/api/knowledge/databases/{db_id}/documents",
-        json={
-            "items": [minio_path],
-            "params": {
-                "content_hashes": {minio_path: content_hash},
-                "auto_index": True
-            }
-        },
+        json={"items": [minio_path], "params": params},
         headers=headers
     )
     resp.raise_for_status()
     return resp.json()
+
+
+def get_folder_id(token: str, db_id: str, folder_name: str) -> str | None:
+    """按名称查找文件夹 ID，不存在返回 None"""
+    headers = {"Authorization": f"Bearer {token}"}
+    resp = httpx.get(f"{BASE_URL}/api/knowledge/databases/{db_id}", headers=headers)
+    resp.raise_for_status()
+    files = resp.json().get("files", {})
+    for file_id, info in files.items():
+        if info.get("is_folder") and info.get("filename") == folder_name:
+            return file_id
+    return None
+
+
+def create_folder(token: str, db_id: str, folder_name: str, parent_id: str | None = None) -> str:
+    """创建文件夹并返回其 file_id"""
+    headers = {"Authorization": f"Bearer {token}"}
+    resp = httpx.post(
+        f"{BASE_URL}/api/knowledge/databases/{db_id}/folders",
+        json={"folder_name": folder_name, "parent_id": parent_id},
+        headers=headers
+    )
+    resp.raise_for_status()
+    return resp.json()["file_id"]
 
 def rag_query(token: str, db_id: str, question: str, top_k: int = 5) -> list[dict]:
     headers = {"Authorization": f"Bearer {token}"}
@@ -312,7 +413,16 @@ def rag_query(token: str, db_id: str, question: str, top_k: int = 5) -> list[dic
 
 # 使用示例
 token = get_token("admin", "your_password")
+
+# 上传到根目录
 upload_and_index(token, "/path/to/doc.pdf", DB_ID)
+
+# 上传到指定目录（先查找，不存在则创建）
+folder_id = get_folder_id(token, DB_ID, "产品文档")
+if folder_id is None:
+    folder_id = create_folder(token, DB_ID, "产品文档")
+upload_and_index(token, "/path/to/doc.pdf", DB_ID, parent_id=folder_id)
+
 results = rag_query(token, DB_ID, "产品退款政策是什么？")
 for chunk in results:
     print(chunk["content"])
@@ -327,8 +437,10 @@ for chunk in results:
 |------|--------|------|
 | 获取 Token | POST | `/api/auth/token` |
 | 获取知识库列表 | GET | `/api/knowledge/databases` |
+| 获取知识库详情（含文件夹列表） | GET | `/api/knowledge/databases/{db_id}` |
 | 上传文件 | POST | `/api/knowledge/files/upload?db_id={db_id}` |
 | 从 URL 抓取 | POST | `/api/knowledge/files/fetch-url` |
+| 创建文件夹 | POST | `/api/knowledge/databases/{db_id}/folders` |
 | 添加文档（含解析/入库） | POST | `/api/knowledge/databases/{db_id}/documents` |
 | 手动触发解析 | POST | `/api/knowledge/databases/{db_id}/documents/parse` |
 | 手动触发入库 | POST | `/api/knowledge/databases/{db_id}/documents/index` |
