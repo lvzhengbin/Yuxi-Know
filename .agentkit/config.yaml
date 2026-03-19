@@ -2,24 +2,25 @@
 
 project:
   name: yuxi-know
-  type: backend-python
+  type: backend-python   # 主服务类型（后端 Python）
 
 knowledge_base:
   mode: centralized
   location: yuxi-knowledge-context/
 
 global_scan_completed: true
+
 services:
-  - name: service-backend
-    type: python
-    language: Python
+  - name: yuxi-know-api
+    type: backend-python
+    language: python
     framework: FastAPI + LangGraph + LightRAG
     path: src/ + server/
-    responsibility: RAG 知识库后端 + 智能体 API 服务
+    responsibility: 后端 API 服务，处理知识库管理、RAG 检索、知识图谱、Agent 调度
 
-  - name: web
-    type: node
-    language: JavaScript
-    framework: Vue.js + Vite + Ant Design Vue
+  - name: yuxi-know-web
+    type: frontend-vue
+    language: javascript
+    framework: Vue 3 + Vite + Ant Design Vue
     path: web/
-    responsibility: 前端管理界面
+    responsibility: 前端 Web 界面，提供知识库管理、对话交互等 UI

@@ -1,149 +1,108 @@
 # 业务概览
 
-> 项目：yuxi-know v0.5.1 | 更新：2026-03-16
+## 项目简介
+
+语析（Yuxi-Know）是一个面向企业和开发者的**智能知识库与知识图谱智能体开发平台**，支持将多格式文档转化为可推理的知识库，并结合 RAG 技术与知识图谱构建多智能体系统，帮助用户在私有数据上实现智能问答、深度分析和知识发现。
+
+---
 
 ## 功能模块
 
-### 模块 1: 智能体管理
+### 模块 1：智能体对话（Agent Chat）
+- **定位**: 平台核心功能，提供基于知识库和工具调用的对话界面
+- **核心功能**:
+  - 基于私有知识库的智能问答（RAG 检索增强）
+  - 支持工具调用（网络搜索、数据库查询、文件操作等）
+  - Human-in-the-loop：对话中途需要用户确认的中断恢复
+  - 多模态支持（图片上传与理解）
+  - 文件附件上传，Agent 可直接读取内容
+  - 对话历史持久化与回溯
+  - 对话导出（HTML 格式）
 
-- **职责**: 管理多种智能体的配置、运行和对话，支持子智能体、Skills、MCP 工具扩展
-- **目录**: `src/agents/`
-- **关键文件**:
-  - `src/agents/chatbot/graph.py` — 基础对话智能体
-  - `src/agents/deep_agent/` — 深度分析智能体（支持 todo/files 渲染）
-  - `src/agents/reporter/` — 报告生成智能体
-  - `src/agents/skills/` — Skills 扩展智能体
-  - `src/agents/common/base.py` — BaseAgent 基类
-  - `src/agents/common/middlewares/` — 中间件（知识库/运行时配置/Skills）
+### 模块 2：知识库管理（Knowledge Base）
+- **定位**: 管理私有文档数据，支持多格式上传和智能分块入库
+- **核心功能**:
+  - 多格式文档上传（PDF / Word / Markdown / 图片 / 压缩包 / 文件夹）
+  - 异步文档解析（解析 → 分块 → 向量化入库三阶段）
+  - 知识库配置（Embedding 模型、分块策略、Rerank 模型）
+  - RAG 检索质量评估（可导入或自动生成评估基准）
+  - 基于文件生成思维导图和示例问题
+  - 同名文件冲突处理
 
-### 模块 2: 知识库（RAG）
+### 模块 3：知识图谱（Knowledge Graph）
+- **定位**: 基于 LightRAG 构建结构化知识图谱，支持图谱推理
+- **核心功能**:
+  - 自动从文档提取实体和关系构建知识图谱（LightRAG）
+  - 手动导入三元组格式图谱（含属性）
+  - 知识图谱可视化（G6 渲染节点/边）
+  - 图谱参与 Agent 推理（content/graph/both 多种模式）
 
-- **职责**: 多格式文档上传、解析、分块、向量化入库，支持语义检索和 Rerank
-- **目录**: `src/knowledge/`
-- **关键文件**:
-  - `src/knowledge/manager.py` — 知识库管理器（统一管理多类型实例）
-  - `src/knowledge/factory.py` — 知识库工厂（按类型创建实例）
-  - `src/knowledge/implementations/milvus.py` — Milvus 向量知识库
-  - `src/knowledge/implementations/lightrag.py` — LightRAG 图谱知识库
-  - `src/knowledge/implementations/dify.py` — Dify 知识库适配
-  - `src/knowledge/chunking/` — 文档分块策略
-  - `src/knowledge/indexing.py` — 文档索引入库
+### 模块 4：扩展管理（Extensions）
+- **定位**: 管理 Agent 可调用的工具和外部服务
+- **核心功能**:
+  - 内置工具管理（网络搜索、数据库查询等）
+  - MCP（Model Context Protocol）服务管理（配置、连接、环境变量）
+  - Skills 管理（Agent 内部执行的技能模块）
 
-### 模块 3: 知识图谱
+### 模块 5：智能体配置（Agent Management）
+- **定位**: 管理多个智能体实例，支持按场景定制
+- **核心功能**:
+  - 创建和配置多个智能体（绑定知识库、工具、模型）
+  - 智能体能力标注（文件上传、网络搜索等）
+  - 多智能体 / 子智能体系统（LangGraph 编排）
 
-- **职责**: 基于 LightRAG 自动或手动构建知识图谱，支持可视化和智能体推理
-- **目录**: `src/knowledge/graphs/`
-- **关键文件**:
-  - `server/routers/graph_router.py` — 图谱 API
-  - `src/knowledge/implementations/lightrag.py` — LightRAG 实现
-  - `web/src/views/GraphView.vue` — 图谱可视化（基于 AntV G6）
-
-### 模块 4: 对话与会话管理
-
-- **职责**: 管理用户对话历史、消息流式输出、会话持久化
-- **目录**: `src/services/`
-- **关键文件**:
-  - `src/services/chat_stream_service.py` — 流式对话服务
-  - `src/services/conversation_service.py` — 会话管理
-  - `src/services/history_query_service.py` — 历史消息查询
-  - `src/repositories/conversation_repository.py` — 会话数据访问
-
-### 模块 5: MCP 扩展
-
-- **职责**: 管理 Model Context Protocol 服务器配置，动态加载外部工具
-- **目录**: `src/services/`
-- **关键文件**:
-  - `src/services/mcp_service.py` — MCP 工具加载与管理
-  - `src/repositories/mcp_server_repository.py` — MCP 服务器配置存储
-  - `server/routers/mcp_router.py` — MCP 管理 API
-
-### 模块 6: Skills 扩展
-
-- **职责**: 管理智能体 Skills（提示词注入、依赖展开、动态激活）
-- **目录**: `src/services/`
-- **关键文件**:
-  - `src/services/skill_service.py` — Skill 服务
-  - `src/agents/common/middlewares/skills_middleware.py` — Skills 中间件
-  - `src/repositories/skill_repository.py` — Skill 数据访问
-
-### 模块 7: 用户与权限管理
-
-- **职责**: 用户注册/登录、部门管理、角色权限控制（superadmin/admin/user）
-- **目录**: `src/repositories/` + `server/routers/`
-- **关键文件**:
-  - `src/storage/postgres/models_business.py` — User/Department ORM 模型
-  - `src/repositories/user_repository.py` — 用户数据访问
-  - `src/repositories/department_repository.py` — 部门数据访问
-  - `server/routers/auth_router.py` — 认证 API
-  - `server/utils/auth_middleware.py` — 鉴权中间件
-
-### 模块 8: 任务队列
-
-- **职责**: 异步处理耗时任务（文档解析、知识库入库等），支持任务状态追踪
-- **目录**: `src/services/`
-- **关键文件**:
-  - `src/services/run_queue_service.py` — 任务队列服务
-  - `src/services/run_worker.py` — 任务 Worker
-  - `server/worker_main.py` — Worker 入口
-  - `src/repositories/task_repository.py` — 任务数据访问
-
-### 模块 9: 知识库评估
-
-- **职责**: 支持导入评估基准或自动构建评估基准，对 RAG 检索质量进行评估
-- **目录**: `src/services/`
-- **关键文件**:
-  - `src/services/evaluation_service.py` — 评估服务
-  - `src/repositories/evaluation_repository.py` — 评估数据访问
-  - `server/routers/evaluation_router.py` — 评估 API
-
-### 模块 10: 系统配置与 Dashboard
-
-- **职责**: 模型供应商配置、系统参数管理、运行状态统计
-- **目录**: `src/config/` + `server/routers/`
-- **关键文件**:
-  - `src/config/app.py` — 应用配置（Pydantic + TOML）
-  - `server/routers/system_router.py` — 系统配置 API
-  - `server/routers/dashboard_router.py` — Dashboard 统计 API
+### 模块 6：系统管理（System）
+- **定位**: 平台级配置和监控
+- **核心功能**:
+  - 模型提供商管理（OpenAI 兼容 / DeepSeek / DashScope / 自定义）
+  - 系统配置（默认模型、Embedding 模型、Reranker 等）
+  - 用户认证与权限管理（JWT + 超级管理员）
+  - 仪表盘（系统状态、使用统计）
+  - 暗黑模式 / 亮色模式切换
 
 ---
 
 ## 关键业务流程
 
-### 流程 1: 文档上传入库
-
-- **入口**: `server/routers/knowledge_router.py` → POST `/api/knowledge/upload`
+### 流程 1：文档知识化（上传入库）
+- **场景**: 用户将 PDF/Word 等文档加入知识库
 - **步骤**:
-  1. 文件上传至 MinIO（`src/storage/minio/`）
-  2. 创建异步任务（`src/services/task_service.py`）
-  3. Worker 执行文档解析（PyMuPDF/docling/OCR）
-  4. 文档分块（`src/knowledge/chunking/`）
-  5. Embedding 向量化（`src/models/embed.py`）
-  6. 写入 Milvus 或 LightRAG（`src/knowledge/indexing.py`）
+  1. 用户上传文件（支持单文件/文件夹/压缩包）
+  2. 系统检测同名文件冲突，提示是否替换
+  3. 异步任务解析文档（OCR/docling/MinerU）
+  4. 按配置策略进行文档分块
+  5. Embedding 模型向量化
+  6. 向量存入 Milvus，可选构建 LightRAG 知识图谱
+  7. 入库完成，知识库可用于检索
 
-### 流程 2: 智能体对话（流式）
-
-- **入口**: `server/routers/chat_router.py` → POST `/api/chat/stream`
+### 流程 2：知识库问答（RAG 对话）
+- **场景**: 用户向 Agent 提问，Agent 从知识库检索后回答
 - **步骤**:
-  1. 请求进入 `chat_stream_service.py`
-  2. 加载智能体实例（`agent_run_service.py`）
-  3. 执行 Middleware 链（知识库注入 → 工具配置 → 模型调用）
-  4. LangGraph 流式输出 SSE 事件
-  5. 对话持久化（`conversation_service.py`）
+  1. 用户在对话界面发送消息
+  2. Agent 中间件注入已配置知识库和工具
+  3. LangGraph 图执行：检索知识库相关内容
+  4. 可选 Rerank 重排序提升相关性
+  5. LLM 基于检索内容生成回答（SSE 实时流式输出）
+  6. 前端展示回答内容及引用来源
 
-### 流程 3: 知识库检索
-
-- **入口**: `src/agents/common/middlewares/knowledge_base_middleware.py`
+### 流程 3：知识图谱构建
+- **场景**: 用户基于文档自动构建知识图谱
 - **步骤**:
-  1. 智能体调用知识库工具
-  2. `KnowledgeBaseManager` 路由到对应 KB 实例
-  3. Milvus 向量检索 → 可选 Rerank（`src/models/rerank.py`）
-  4. 返回相关文档片段给智能体
+  1. 用户创建 LightRAG 类型知识库并上传文档
+  2. LightRAG 自动提取文档中的实体和关系
+  3. 构建图谱存入 Neo4j / 向量存入 Milvus
+  4. 用户在图谱页面可视化查看节点和关系
+  5. Agent 对话时可选 graph/both 模式利用图谱推理
 
-### 流程 4: 用户登录
-
-- **入口**: `server/routers/auth_router.py` → POST `/api/auth/token`
+### 流程 4：MCP 工具接入
+- **场景**: 管理员接入外部 MCP 服务供 Agent 调用
 - **步骤**:
-  1. `LoginRateLimitMiddleware` 限流检查（10次/60秒）
-  2. 验证用户名密码（`user_repository.py`）
-  3. 检查账号锁定状态
-  4. 生成 JWT Token 返回
+  1. 管理员在扩展管理页面添加 MCP 服务配置
+  2. 系统通过 HTTP/SSE 连接 MCP 服务器
+  3. 自动发现并注册 MCP 提供的工具列表
+  4. Agent 对话中可动态调用 MCP 工具
+  5. 相关坑点：MCP HTTP 服务器需注意超时配置，避免 API 挂起
+
+---
+
+*由 Agent Knowledge Kit v3.0 生成 · 2026-03-19*

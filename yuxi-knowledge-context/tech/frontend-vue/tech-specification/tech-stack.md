@@ -1,102 +1,67 @@
-# 前端技术栈说明
+# 技术栈清单 — frontend-vue
 
-> 领域：frontend-vue | 项目：yuxi-know v0.5.1 | 更新：2026-03-16
+**项目类型**: Vue 3 前端 SPA
+**语言**: JavaScript (ES2022+)
+**包管理工具**: pnpm
+**构建工具**: Vite
 
-## 语言与运行时
-
-| 项目 | 版本 |
-|------|------|
-| JavaScript (ES Modules) | - |
-| Node.js (dev) | - |
-| 包管理 | pnpm@10.11.0 |
+---
 
 ## 核心框架
 
-| 框架 | 版本 | 用途 |
+| 技术 | 版本 | 用途 |
 |------|------|------|
-| Vue | ^3.5.29 | 核心 UI 框架（Composition API） |
-| Vue Router | ^4.6.4 | SPA 路由管理 |
-| Pinia | ^3.0.4 | 状态管理 |
-| pinia-plugin-persistedstate | ^4.7.1 | Pinia 状态持久化（localStorage） |
-
-## 构建工具
-
-| 工具 | 版本 | 用途 |
-|------|------|------|
-| Vite | ^7.3.1 | 构建工具 + Dev Server |
-| @vitejs/plugin-vue | ^6.0.4 | Vue SFC 编译插件 |
+| Vue 3 | ^3.x | 渐进式前端框架，Composition API |
+| Vite | ^6.x | 构建工具，开发热重载 |
+| Vue Router | ^4.x | SPA 路由管理 |
+| Pinia | ^3.x | 状态管理（替代 Vuex） |
+| pinia-plugin-persistedstate | ^4.x | Pinia 持久化（localStorage） |
 
 ## UI 组件库
 
-| 库 | 版本 | 用途 |
-|----|------|------|
-| ant-design-vue | ^4.2.6 | 主 UI 组件库 |
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| Ant Design Vue | ^4.2.6 | 主要 UI 组件库（全量引入） |
 | @ant-design/icons-vue | ^7.0.1 | Ant Design 图标 |
-| lucide-vue-next | ^0.542.0 | 推荐图标库（更现代） |
-| less | ^4.5.1 | CSS 预处理器 |
+| lucide-vue-next | - | 补充图标库（推荐，需注意尺寸） |
 
-## 可视化
+## 数据可视化
 
-| 库 | 版本 | 用途 |
-|----|------|------|
-| @antv/g6 | ^5.0.51 | 知识图谱可视化（主图库） |
-| sigma + graphology | ^3.0.2 / ^0.26.0 | 备用图渲染（Sigma.js） |
-| echarts | ^6.0.0 | 数据图表（Dashboard） |
-| d3 | ^7.9.0 | 底层数据可视化工具 |
-| @sigma/edge-curve | ^3.1.0 | Sigma 边弯曲插件 |
-| @sigma/node-border | ^3.0.0 | Sigma 节点边框插件 |
-
-## Markdown / 富文本
-
-| 库 | 版本 | 用途 |
-|----|------|------|
-| marked | ^16.4.2 | Markdown 解析 |
-| marked-highlight | ^2.2.3 | Markdown 代码高亮 |
-| highlight.js | ^11.11.1 | 代码语法高亮 |
-| md-editor-v3 | ^5.8.5 | Markdown 编辑器组件 |
-
-## 思维导图
-
-| 库 | 版本 | 用途 |
-|----|------|------|
-| markmap-lib | ^0.18.12 | Markdown → 思维导图数据 |
-| markmap-view | ^0.18.12 | 思维导图渲染 |
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| @antv/g6 | ^5.0.51 | 知识图谱可视化（主要方案） |
+| @sigma/edge-curve | ^3.1.0 | Sigma.js 曲线边渲染 |
+| @sigma/node-border | ^3.0.0 | Sigma.js 节点边框渲染 |
 
 ## 工具库
 
-| 库 | 版本 | 用途 |
-|----|------|------|
-| @vueuse/core | ^13.9.0 | Vue Composition 工具集 |
-| dayjs | ^1.11.19 | 日期处理 |
-
-## 代码质量
-
-| 工具 | 版本 | 用途 |
+| 技术 | 版本 | 用途 |
 |------|------|------|
-| ESLint | ^9.39.3 | 代码规范检查 |
-| Prettier | ^3.8.1 | 代码格式化 |
-| eslint-plugin-vue | ^10.8.0 | Vue 专用 lint 规则 |
+| @vueuse/core | ^13.9.0 | Vue 组合式工具函数集 |
+| axios / fetch | - | HTTP 请求（封装于 `src/apis/base.js`） |
 
-## 关键配置
+## 样式
 
-### Vite 代理
+| 技术 | 用途 |
+|------|------|
+| Less | 组件样式（CLAUDE.md 规定，必须优先使用 base.css 颜色变量） |
+| `src/assets/css/base.css` | 全局颜色变量定义，所有颜色值从此引用 |
 
-```js
-// web/vite.config.js
-proxy: {
-  '^/api': {
-    target: env.VITE_API_URL || 'http://api:5050',
-    changeOrigin: true
-  }
-}
-```
+## 开发工具
 
-路径别名 `@` → `./src`，所有 API 请求代理到后端服务。
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| ESLint | - | 代码检查（`npm run lint`） |
+| Prettier | - | 代码格式化（`npm run format`，`--experimental-cli`） |
+| Vitest | (推测) | 单元测试（`src/utils/__tests__/` 存在测试文件） |
 
-### CSS 设计系统
+---
 
-颜色变量定义于 `web/src/assets/css/base.css`：
-- `--main-*`：主品牌色阶（青蓝色系，`--main-color: #016179`）
-- `--gray-*`：灰色阶
-- `--color-primary/secondary/success/error/warning/info-*`：标准5档语义色阶
-- 支持暗黑模式（dark mode）
+## 关键技术决策
+
+- **为什么选 Ant Design Vue？** 提供完整的企业级组件，与后台管理系统风格匹配。
+- **为什么选 G6 做图谱可视化？** @antv/g6 v5 支持大规模节点渲染，原生支持知识图谱的节点/边类型定制。
+- **为什么选 Pinia？** 比 Vuex 更轻量，原生 TypeScript 支持，持久化插件简单易用。
+- **CSS 策略**：使用 Less 变量而非硬编码颜色，支持暗黑模式切换（v0.4.0 新增）。
+
+*由 Agent Knowledge Kit v3.0 生成 · 2026-03-19*
