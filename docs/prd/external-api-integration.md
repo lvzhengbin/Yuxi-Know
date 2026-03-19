@@ -97,18 +97,24 @@ Content-Type: application/json
 {
   "items": ["http://minio:9000/ref-{db_id}/document_1710000000000.pdf"],
   "params": {
+    "content_hashes": {
+      "http://minio:9000/ref-{db_id}/document_1710000000000.pdf": "sha256:abc123..."
+    },
     "auto_index": true
   }
 }
 ```
 
-**params 可选参数：**
+> `content_hashes` 的键为 Step 1 返回的 `file_path`，值为 Step 1 返回的 `content_hash`。**当 items 为 MinIO 文件 URL 时为必填**，缺少此参数会导致添加失败（`Missing content_hash for file`）。
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `auto_index` | bool | `true` 表示解析完成后自动入库，默认 `false` |
-| `chunk_preset_id` | string | 切片预设 ID，控制分块策略 |
-| `chunk_parser_config` | object | 自定义分块解析配置 |
+**params 参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `content_hashes` | object | **是**（MinIO 文件时） | MinIO URL → content_hash 的映射，值来自 Step 1 响应的 `content_hash` 字段 |
+| `auto_index` | bool | 否 | `true` 表示解析完成后自动入库，默认 `false` |
+| `chunk_preset_id` | string | 否 | 切片预设 ID，控制分块策略 |
+| `chunk_parser_config` | object | 否 | 自定义分块解析配置 |
 
 此接口为异步任务，响应体包含 `task_id`，可通过以下接口轮询进度：
 
@@ -267,12 +273,21 @@ def upload_and_index(token: str, file_path: str, db_id: str) -> dict:
             headers=headers
         )
     resp.raise_for_status()
-    minio_path = resp.json()["file_path"]
+    upload_result = resp.json()
+    minio_path = upload_result["file_path"]
+    content_hash = upload_result["content_hash"]
 
     # Step 2: 添加到知识库并自动入库
+    # content_hashes 为必填：key 为 MinIO URL，value 为 content_hash
     resp = httpx.post(
         f"{BASE_URL}/api/knowledge/databases/{db_id}/documents",
-        json={"items": [minio_path], "params": {"auto_index": True}},
+        json={
+            "items": [minio_path],
+            "params": {
+                "content_hashes": {minio_path: content_hash},
+                "auto_index": True
+            }
+        },
         headers=headers
     )
     resp.raise_for_status()
